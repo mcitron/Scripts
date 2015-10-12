@@ -1,0 +1,44 @@
+#! /bin/bash
+
+function start_project {
+    EXPECTED_ARGS=1
+    if [ $# -ne $EXPECTED_ARGS ]
+    then
+      echo "Usage: `basename $0` <project name>"
+      echo -e "\t- Starts a screen session and creates folders for project"
+      exit $E_BADARGS
+    fi
+    project_name="$1"
+    echo "project: $project_name"
+    # check if directory || symlink || file exists
+    if [[ ! -d "$project_name" && ! -L "$project_name" && ! -e "$project_name" ]]
+    then
+        # we can make the folder
+        # need to check screen session doesn't exist yet
+        # list all screens | show only screen lines | show only screen names
+        # | check for project name
+        screen_name_list=`screen -list | grep "[0-9]*\.[a-zA-Z]*[^$]" | 
+            awk -F"." '{ print $2 }' | grep "^$project_name	"`
+        # note: the final grep above should ensure that project names that
+        # are contained in previous project names don't match. Might want to do
+        # awk '/\t/' instead, have actually used <c-v><tab> to insert tab char
+        if [[ $screen_name_list == "" ]]
+        then
+            mkdir "$project_name"
+            cd "$project_name"
+            screen -S "$project_name" 
+        else
+            project_exception "screen session" "$project_name"
+        fi
+    else
+        project_exception "folder/file" "$project_name"
+    fi
+}
+
+function project_exception {
+    etype="$1"
+    pname="$2"
+    echo "A $etype already exists with desired name \"$pname\""  
+}
+
+start_project $1

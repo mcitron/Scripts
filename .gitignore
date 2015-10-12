@@ -1,0 +1,17 @@
+*.com    
+*.class    
+*.dll    
+*.exe    
+*.o    
+*.so   
+# Vim   
+*.swp
+*.pyc
+*.swp
+*.swo
+*~
+*.root
+*hadd.sh
+output/
+outputVols
+shapeOutput/

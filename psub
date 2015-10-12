@@ -1,0 +1,31 @@
+#! /bin/bash
+EXPECTED_ARGS=4
+E_BADARGS=65
+
+# bail if we dont get 4 args
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` <job name> <script> <start index> <end index>"
+  exit $E_BADARGS
+fi
+
+# for readability
+JOB_NAME=$1
+JOB_SCRIPT=$2
+FIRST_ENTRY=$3
+LAST_ENTRY=$4
+
+# define some constants
+STDOUT="/vols/cms02/samr/batch_reports"
+STDERR="/vols/cms02/samr/batch_reports"
+PARA_MAX=2000
+PARA_STEP=1
+QUEUE="hepmedium.q"
+
+JOB_NUM=0
+for ((i=$FIRST_ENTRY;i<$LAST_ENTRY;i+=$PARA_MAX)); do
+  (( JOB_NUM++ ))
+  j=$(( i+$PARA_MAX-1))
+  if ((j>LAST_ENTRY)); then j=$LAST_ENTRY; fi
+  qsub -q "$QUEUE" -o "$STDOUT" -e "$STDERR" -N "$JOB_NAME$JOB_NUM" -t $i-$j:$PARA_STEP "$JOB_SCRIPT"
+done
