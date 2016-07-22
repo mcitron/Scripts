@@ -29,8 +29,8 @@ def makefielddict( names, widths ) :
         fields[name] = [ start, end ]
     return fields
 
-def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q" ],
-                 queuetimes = [            1,             6,          72 ],
+def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q","hep.q" ],
+                 queuetimes = [            1,             6,          72 ,-1],
                  imminent_f = 0.10 ) :
     TITLE_LINES = 2
     field_widths = [ 8, 8, 11, 13, 6, 20, 31, 6, 12 ]
@@ -41,7 +41,7 @@ def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q" ],
 
     # we could just do qstat -u *, and then assign queue = job_temp["queue"];
     # this leaves some queeud jobs unassigned to a queue, as qstat doesn't print
-    # hteir queue (it only shows them in the queue listing).
+    # their queue (it only shows them in the queue listing).
     # this wuold save calls to qstat, but is less accurate
     user_jobs = {}
     expiring = {}
@@ -71,7 +71,14 @@ def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q" ],
                 __G_JOBS[id] = queue
             job_val = 1
             if "-" in job_temp["ja-task-id"] :
-                ja_fields = re.split("[-:]",job_temp["ja-task-id"])
+                ja_fieldsTemp = re.split("[-:]",job_temp["ja-task-id"])
+                ja_fields = []
+                for x in ja_fieldsTemp:
+                    y = x.split(",")
+                    for temp in y:
+                        if temp != "":
+                            ja_fields.append(temp)
+
                 ja_start = int(ja_fields[0])
                 ja_end   = int(ja_fields[1])
                 if len(ja_fields)>2 and ja_fields[2]:
