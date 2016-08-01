@@ -46,10 +46,24 @@ def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q","hep.q"
     user_jobs = {}
     expiring = {}
     for q,queue in enumerate(queuenames) :
-        alljobs = getoutput('qstat -u "*" -q %s' % queue )
-        joblines = alljobs.split("\n")[TITLE_LINES:]
+        jobTime = [0]
+        joblines = []
+        iSafety = 0
+        while len(jobTime) != len(joblines):
+            iSafety += 1
+            alljobs = getoutput('qstat -u "*" -q %s' % queue )
+            alljobsWithResource = getoutput('qstat -u "*" -r -q %s' % queue )
+            joblines = alljobs.split("\n")[TITLE_LINES:]
 
-        for job in joblines :
+            #resourcelines = alljobsWithResource.split("\n")[5]
+            jobTime = []
+            for line in alljobsWithResource.split("\n"):
+                if "h_rt" in line:
+                    jobTime.append(int(re.findall('(?<=h_rt=)\d+', line)[0]))
+            if iSafety > 100:
+                raise ValueError,"Can't get same value for number of jobs for times and other job attributes"
+
+        for iJob,job in enumerate(joblines):
             job_temp = {}
             for field in fields :
                 job_temp[field] = job[ fields[field][0]:fields[field][1]].rstrip()
@@ -60,10 +74,10 @@ def getuserjobs( queuenames = [ "hepshort.q", "hepmedium.q", "heplong.q","hep.q"
             if state == "r" :
                 j_start  = time.strptime( job_temp["start"], "%m/%d/%Y %H:%M:%S" )
                 begin    = time.mktime( j_start )
-                end      = begin + queuetimes[q]*60*60
+                end      = begin + jobTime[iJob]
                 now      = time.mktime( time.localtime() )
                 remain   = end-now
-                imminent = imminent_f*(queuetimes[q]*60*60)
+                imminent = 0.05*jobTime[iJob]
                 if remain < imminent :
                     expiring.setdefault(user,[]).append( id )
 
